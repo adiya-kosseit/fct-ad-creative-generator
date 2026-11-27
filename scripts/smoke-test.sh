@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Проверка развёрнутого приложения: сайт отдаётся, API живой, Gemini реально отвечает.
 # Запуск из корня репозитория после terraform apply:
-#   ./scripts/smoke-test.sh
+#   bash scripts/smoke-test.sh
 set -euo pipefail
 
 cd "$(dirname "$0")/../terraform/envs/dev"
@@ -32,13 +32,13 @@ echo "  ...  POST /generate с реальным вызовом Gemini (до 30 �
 start=$(date +%s)
 resp=$(curl -s -w '\n%{http_code}' -X POST "$API_URL/generate" \
   -H 'Content-Type: application/json' \
-  -d '{"client":"Smoke test","niche":"кофейня","product":"кофе с собой","goal":"продажи","lang":"русский","count":1}')
+  -d '{"client":"Smoke test","niche":"coffee shop","product":"coffee to go","goal":"sales","lang":"\u0440\u0443\u0441\u0441\u043a\u0438\u0439","count":1}')
 code=$(echo "$resp" | tail -n1)
 body=$(echo "$resp" | sed '$d')
 took=$(( $(date +%s) - start ))
 if [ "$code" = "200" ]; then
   ok "Gemini ответил за ${took} с"
-  echo "$body" | python3 -c 'import json,sys; d=json.load(sys.stdin); v=d["variants"][0]; print("       requestId:", d["requestId"]); print("       title:", v["title"]); print("       script:", v["script"][:160].replace("\n"," / "), "...")'
+  echo "       ответ: $(echo "$body" | head -c 400) ..."
 else
   echo "$body"
   fail "POST /generate вернул $code"
