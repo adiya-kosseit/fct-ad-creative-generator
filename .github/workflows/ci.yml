@@ -6,16 +6,23 @@ on:
   pull_request:
 
 jobs:
-  terraform:
+  terraform-fmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - name: fmt
+        run: terraform fmt -check -diff -recursive terraform
+
+  terraform-validate:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         root: [terraform/bootstrap, terraform/envs/dev]
     steps:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3
-      - name: fmt
-        run: terraform fmt -check -recursive terraform
       - name: validate
         working-directory: ${{ matrix.root }}
         run: |
