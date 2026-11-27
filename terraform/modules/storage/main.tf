@@ -21,8 +21,8 @@ data "aws_caller_identity" "current" {}
 resource "aws_dynamodb_table" "history" {
   name           = "${var.name}-history"
   billing_mode   = "PROVISIONED"
-  read_capacity  = 5
-  write_capacity = 5
+    read_capacity  = 5
+    write_capacity = 5
   hash_key       = "requestId"
 
   attribute {
