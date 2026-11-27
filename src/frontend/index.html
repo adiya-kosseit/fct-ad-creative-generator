@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Генератор сценариев видеокреативов</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.12.2/mammoth.browser.min.js"></script>
+<style>
+  :root{
+    --bg:#000; --surface:#141414; --surface2:#1b1b1b; --border:#2a2a2a;
+    --accent:#FF2424; --text:#F2F2F2; --dim:#9a9a9a; --dim2:#6b6b6b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 20px 80px}
+
+  header.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:14px}
+  .brand .word{font-family:'Unbounded',sans-serif;font-weight:700;font-size:16px}
+  .brand .sub{font-size:12px;color:var(--dim);margin-top:2px}
+
+  .tabs{display:flex;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:4px}
+  .tab-btn{background:transparent;border:none;color:var(--dim);font-family:'Inter';font-weight:600;font-size:13.5px;padding:9px 16px;border-radius:9px;cursor:pointer;transition:.15s}
+  .tab-btn.active{background:var(--accent);color:#000}
+  .tab-btn:not(.active):hover{color:var(--text)}
+
+  .view{display:none}
+  .view.active{display:block}
+
+  .grid{display:grid;grid-template-columns:380px 1fr;gap:22px;align-items:start}
+  @media (max-width:900px){.grid{grid-template-columns:1fr}.row2{grid-template-columns:1fr !important}}
+
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px}
+  .card + .card{margin-top:16px}
+
+  .step-head{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+  .step-num{width:22px;height:22px;border-radius:6px;background:var(--accent);color:#000;font-family:'Unbounded';font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .step-head h2{font-family:'Unbounded';font-size:13.5px;font-weight:600;margin:0}
+
+  label{display:block;font-size:12.5px;font-weight:600;color:var(--dim);margin:14px 0 6px}
+  label:first-of-type{margin-top:0}
+  input[type=text],input[type=number],select,textarea{
+    width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+    color:var(--text);font-family:'Inter';font-size:13.5px;padding:11px 12px;outline:none;transition:.15s}
+  input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+  textarea{min-height:68px;resize:vertical;line-height:1.5}
+  .hint{font-size:11.5px;color:var(--dim2);margin-top:5px;line-height:1.45}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chk{background:var(--surface2);border:1px solid var(--border);color:var(--dim);font-family:'Inter';
+    font-size:12.5px;padding:8px 12px;border-radius:9px;cursor:pointer;transition:.15s}
+  .chk.active{background:var(--accent);color:#000;border-color:var(--accent);font-weight:600}
+
+  .btn{width:100%;background:var(--accent);color:#000;border:none;border-radius:11px;font-family:'Unbounded';
+    font-weight:700;font-size:13px;padding:14px;cursor:pointer;margin-top:18px;transition:.15s}
+  .btn:hover:not(:disabled){filter:brightness(1.1)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .btn.ghost{background:transparent;border:1px solid var(--border);color:var(--dim);font-family:'Inter';font-weight:600}
+  .btn.ghost:hover{color:var(--text);border-color:var(--dim2)}
+  .btn.small{width:auto;padding:8px 14px;font-size:12px;margin:0}
+
+  .out-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:12px;flex-wrap:wrap}
+  .section-title{font-family:'Unbounded';font-size:14px;font-weight:600;margin:0}
+  #out-status,#lib-status{font-size:12.5px;color:var(--dim)}
+  #out-status.err,#lib-status.err{color:var(--accent)}
+
+  .script-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px}
+  .script-card .num{font-family:'Unbounded';font-size:11px;color:var(--accent);margin-bottom:10px;letter-spacing:.5px}
+  .script-body{font-size:13.5px;line-height:1.65;white-space:pre-wrap;word-break:break-word}
+  .script-body .plan{color:var(--dim);font-style:italic}
+  .script-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+  .edited-tag{color:var(--dim2);font-size:10px;margin-left:8px;letter-spacing:0}
+
+  .skeleton{height:120px;border-radius:14px;margin-bottom:14px;
+    background:linear-gradient(90deg,var(--surface) 25%,var(--surface2) 50%,var(--surface) 75%);
+    background-size:200% 100%;animation:sh 1.3s infinite}
+  @keyframes sh{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+  .lib-entry{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px}
+  .lib-entry .head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+  .lib-entry .client{font-family:'Unbounded';font-size:13px;font-weight:600}
+  .lib-entry .meta{font-size:11.5px;color:var(--dim2);margin-top:3px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <div class="word">ГЕНЕРАТОР СЦЕНАРИЕВ</div>
+      <div class="sub">Бриф → сценарии видеокреативов</div>
+    </div>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="build">Конструктор</button>
+      <button class="tab-btn" data-tab="lib">История</button>
+    </div>
+  </header>
+
+  <!-- ===================== КОНСТРУКТОР ===================== -->
+  <div class="view active" id="view-build">
+    <div class="grid">
+
+      <!-- ---------- ФОРМА ---------- -->
+      <div>
+        <div class="card">
+          <div class="step-head"><div class="step-num">1</div><h2>Клиент</h2></div>
+
+          <label>Клиент / бренд *</label>
+          <input type="text" id="f-client" placeholder="напр. BioHAYAT Kids">
+
+          <label>Ниша</label>
+          <input type="text" id="f-niche" placeholder="напр. детские витамины">
+
+          <label>Продукт или услуга</label>
+          <input type="text" id="f-product" placeholder="что именно рекламируем">
+
+          <div class="row2">
+            <div>
+              <label>Цель рекламы</label>
+              <input type="text" id="f-goal" placeholder="лиды, продажи, квиз">
+            </div>
+            <div>
+              <label>Язык</label>
+              <select id="f-lang">
+                <option value="русский">русский</option>
+                <option value="казахский">казахский</option>
+                <option value="английский">английский</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="step-head"><div class="step-num">2</div><h2>Аудитория и оффер</h2></div>
+
+          <label>Целевая аудитория и боли</label>
+          <textarea id="f-audience" placeholder="напр. мамы 25–40, ребёнок плохо ест, часто болеет"></textarea>
+
+          <label>Оффер и уникальность</label>
+          <textarea id="f-offer" placeholder="чем отличается, гарантии, сертификаты, опыт"></textarea>
+
+          <label>Цена, акция, условия</label>
+          <input type="text" id="f-price" placeholder="напр. скидка 30%, рассрочка 0-0-12">
+
+          <label>Возражения клиентов</label>
+          <textarea id="f-objections" placeholder="что мешает купить и как это закрываем"></textarea>
+        </div>
+
+        <div class="card">
+          <div class="step-head"><div class="step-num">3</div><h2>Формат и запуск</h2></div>
+
+          <label>Формат подачи</label>
+          <div class="chips" id="f-formats">
+            <button type="button" class="chk" data-v="говорящая голова">говорящая голова</button>
+            <button type="button" class="chk" data-v="наложение голоса">наложение голоса</button>
+            <button type="button" class="chk" data-v="UGC от первого лица">UGC от первого лица</button>
+            <button type="button" class="chk" data-v="скетч без слов">скетч без слов</button>
+            <button type="button" class="chk" data-v="сравнение было/стало">было/стало</button>
+          </div>
+
+          <label>Задача креатива</label>
+          <select id="f-task">
+            <option value="авто">Авто — пусть подберёт сам</option>
+            <option value="привлечь внимание">Привлечь внимание</option>
+            <option value="усилить боль">Усилить боль</option>
+            <option value="усилить желание">Усилить желание</option>
+            <option value="снять тревогу">Снять тревогу</option>
+            <option value="подтолкнуть к решению">Подтолкнуть к решению</option>
+          </select>
+
+          <label>Не повторять</label>
+          <textarea id="f-avoid" placeholder="какие приёмы уже использовали"></textarea>
+
+          <label>Загрузить файл брифа <span style="color:var(--dim2)">(.txt, .md, .docx)</span></label>
+          <input type="file" id="f-file" accept=".txt,.md,.docx">
+          <div class="hint" id="f-file-status"></div>
+
+          <label>Полный текст брифа</label>
+          <textarea id="f-fulltext" style="min-height:90px" placeholder="можно вставить бриф целиком в свободной форме"></textarea>
+          <div class="hint">Текст из файла подтянется сюда. Поля выше из файла не заполняются — их стоит проверить отдельно.</div>
+
+          <div class="row2">
+            <div>
+              <label>Количество сценариев</label>
+              <input type="number" id="f-count" value="3" min="1" max="4">
+            </div>
+            <div></div>
+          </div>
+          <div class="hint">Максимум 4: время ответа модели ограничено лимитом шлюза в 29 секунд.</div>
+
+          <label>Фокус для каждого сценария</label>
+          <div class="hint">Если сценарии должны бить в разное — по одному фокусу на строку. Пустые модель выберет сама.</div>
+          <div id="f-focus-list" style="margin-top:8px"></div>
+
+          <button class="btn" id="btn-generate">Сгенерировать сценарии</button>
+        </div>
+      </div>
+
+      <!-- ---------- РЕЗУЛЬТАТ ---------- -->
+      <div>
+        <div class="out-head">
+          <h2 class="section-title">Результат</h2>
+          <div id="out-status">Заполните бриф и нажмите кнопку</div>
+        </div>
+        <div id="out-list"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===================== ИСТОРИЯ ===================== -->
+  <div class="view" id="view-lib">
+    <div class="out-head">
+      <h2 class="section-title">История запросов</h2>
+      <div id="lib-status"></div>
+    </div>
+    <input type="text" id="lib-search" placeholder="поиск по клиенту или нише..." style="margin-bottom:16px">
+    <div id="lib-list"></div>
+  </div>
+
+</div>
+
+<!-- config.js создаёт Terraform при деплое (адрес API). Локально его нет — тогда берётся адрес ниже. -->
+<script src="config.js"></script>
+<script>
+/* =========================================================================
+   КОНФИГУРАЦИЯ
+   На сайте адрес API приходит из config.js, править ничего не нужно.
+   Для локальной разработки впишите сюда вывод terraform output api_url.
+   ВАЖНО: без слэша в конце.
+   ========================================================================= */
+const API_URL = ((window.APP_CONFIG && window.APP_CONFIG.apiUrl) || "https://ЗАМЕНИТЬ_НА_АДРЕС_API").replace(/\/+$/, "");
+
+/* Ответ может прийти не в JSON (например, 503 от шлюза при таймауте) */
+async function readJson(res) {
+  try { return await res.json(); } catch (_) { return {}; }
+}
+function apiErrorMessage(data, fallback) {
+  return (data && data.error && data.error.message) || (data && data.message) || fallback;
+}
+
+/* ---------- вкладки ---------- */
+document.querySelectorAll(".tab-btn").forEach((b) => {
+  b.addEventListener("click", () => {
+    document.querySelectorAll(".tab-btn").forEach((x) => x.classList.remove("active"));
+    document.querySelectorAll(".view").forEach((x) => x.classList.remove("active"));
+    b.classList.add("active");
+    document.getElementById("view-" + b.dataset.tab).classList.add("active");
+    if (b.dataset.tab === "lib") loadHistory();
+  });
+});
+
+/* ---------- чипсы форматов ---------- */
+document.querySelectorAll("#f-formats .chk").forEach((c) => {
+  c.addEventListener("click", () => c.classList.toggle("active"));
+});
+
+/* ---------- строки фокуса зависят от количества сценариев ---------- */
+function rebuildFocusRows() {
+  const n = Math.min(Math.max(parseInt(document.getElementById("f-count").value) || 3, 1), 4);
+  const list = document.getElementById("f-focus-list");
+  const old = Array.from(list.querySelectorAll(".f-focus-item")).map((i) => i.value);
+  list.innerHTML = "";
+  for (let i = 0; i < n; i++) {
+    const row = document.createElement("div");
+    row.style.cssText = "display:flex;gap:8px;align-items:center;margin-bottom:8px";
+    row.innerHTML =
+      '<div style="font-family:Unbounded;font-size:11px;color:var(--dim2);width:14px">' + (i + 1) + "</div>" +
+      '<input type="text" class="f-focus-item" placeholder="напр. сегмент, боль, направление">';
+    list.appendChild(row);
+    if (old[i]) row.querySelector("input").value = old[i];
+  }
+}
+document.getElementById("f-count").addEventListener("input", rebuildFocusRows);
+rebuildFocusRows();
+
+/* ---------- загрузка файла брифа ---------- */
+document.getElementById("f-file").addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const status = document.getElementById("f-file-status");
+  status.textContent = "Читаю файл...";
+  try {
+    let text = "";
+    if (file.name.toLowerCase().endsWith(".docx")) {
+      const buf = await file.arrayBuffer();
+      text = (await mammoth.extractRawText({ arrayBuffer: buf })).value;
+    } else {
+      text = await file.text();
+    }
+    const target = document.getElementById("f-fulltext");
+    target.value = target.value ? target.value + "\n\n" + text.trim() : text.trim();
+    status.textContent = "Загружено: " + file.name;
+  } catch (err) {
+    status.textContent = "Не удалось прочитать файл: " + err.message;
+  }
+});
+
+/* ---------- сбор брифа ---------- */
+/* Имена полей обязаны совпадать с контрактом API буквально. */
+function collectBrief() {
+  const val = (id) => (document.getElementById(id)?.value || "").trim();
+  return {
+    client:     val("f-client"),
+    niche:      val("f-niche"),
+    product:    val("f-product"),
+    goal:       val("f-goal"),
+    lang:       val("f-lang"),
+    audience:   val("f-audience"),
+    offer:      val("f-offer"),
+    price:      val("f-price"),
+    objections: val("f-objections"),
+    formats:    Array.from(document.querySelectorAll("#f-formats .chk.active")).map((e) => e.dataset.v),
+    task:       val("f-task"),
+    avoid:      val("f-avoid"),
+    fullText:   val("f-fulltext"),
+    count:      parseInt(val("f-count")) || 3,
+    focus:      Array.from(document.querySelectorAll(".f-focus-item")).map((e) => e.value.trim()).filter(Boolean)
+  };
+}
+
+/* ---------- генерация ---------- */
+let currentRequestId = null;
+let currentVariants = [];
+
+document.getElementById("btn-generate").addEventListener("click", generate);
+
+async function generate() {
+  const btn = document.getElementById("btn-generate");
+  const status = document.getElementById("out-status");
+  const list = document.getElementById("out-list");
+
+  if (btn.disabled) return;                       // защита от двойного нажатия
+
+  const brief = collectBrief();
+  if (!brief.client) {
+    status.classList.add("err");
+    status.textContent = "Укажите клиента или бренд";
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = "Генерирую...";
+  status.classList.remove("err");
+  list.innerHTML = "";
+  for (let i = 0; i < brief.count; i++) {
+    const s = document.createElement("div");
+    s.className = "skeleton";
+    list.appendChild(s);
+  }
+
+  let seconds = 0;
+  status.textContent = "Модель пишет сценарии... 0 с";
+  const ticker = setInterval(() => {
+    seconds++;
+    status.textContent = "Модель пишет сценарии... " + seconds + " с";
+  }, 1000);
+
+  try {
+    const res = await fetch(API_URL + "/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(brief)
+    });
+    const data = await readJson(res);
+    if (res.status === 503 || res.status === 504) throw new Error("Модель отвечала слишком долго. Попробуйте ещё раз или уменьшите количество сценариев.");
+    if (!res.ok) throw new Error(apiErrorMessage(data, "Не удалось сгенерировать сценарии"));
+
+    currentRequestId = data.requestId;
+    currentVariants = data.variants || [];
+
+    list.innerHTML = "";
+    currentVariants.forEach((v, i) => renderScript(list, v, i, data.requestId, currentVariants));
+    status.textContent = "Готово: " + currentVariants.length + (data.warning ? " · " + data.warning : "");
+
+  } catch (e) {
+    list.innerHTML = "";
+    status.classList.add("err");
+    status.textContent = humanError(e);
+    console.error(e);
+
+  } finally {
+    clearInterval(ticker);
+    btn.disabled = false;
+    btn.textContent = "Сгенерировать сценарии";
+  }
+}
+
+/* ---------- отрисовка одного сценария с редактированием ----------
+   allVariants — массив, которому принадлежит variant: при сохранении
+   на сервер уходит весь набор сценариев этого запроса. */
+function renderScript(container, variant, idx, requestId, allVariants) {
+  const card = document.createElement("div");
+  card.className = "script-card";
+  card.innerHTML =
+    '<div class="num">СЦЕНАРИЙ ' + (idx + 1) +
+      (variant.title ? " · " + escapeHtml(variant.title) : "") +
+      '<span class="edited-tag"></span></div>' +
+    '<div class="script-body view-mode">' + formatScriptHtml(variant.script || "") + "</div>" +
+    '<textarea class="script-body edit-mode" style="display:none;min-height:180px"></textarea>' +
+    '<div class="script-actions">' +
+      '<button class="btn ghost small" data-copy>Копировать</button>' +
+      '<button class="btn ghost small" data-edit>Редактировать</button>' +
+      '<button class="btn ghost small" data-save style="display:none">Сохранить правки</button>' +
+      '<button class="btn ghost small" data-cancel style="display:none">Отмена</button>' +
+    "</div>";
+  container.appendChild(card);
+
+  const view = card.querySelector(".view-mode");
+  const edit = card.querySelector(".edit-mode");
+  const tag  = card.querySelector(".edited-tag");
+  const bEdit = card.querySelector("[data-edit]");
+  const bSave = card.querySelector("[data-save]");
+  const bCancel = card.querySelector("[data-cancel]");
+
+  edit.value = variant.script || "";
+
+  card.querySelector("[data-copy]").addEventListener("click", async (ev) => {
+    await navigator.clipboard.writeText(edit.value);
+    const b = ev.target;
+    b.textContent = "Скопировано";
+    setTimeout(() => (b.textContent = "Копировать"), 1400);
+  });
+
+  bEdit.addEventListener("click", () => {
+    view.style.display = "none"; edit.style.display = "block";
+    bEdit.style.display = "none"; bSave.style.display = ""; bCancel.style.display = "";
+  });
+
+  bCancel.addEventListener("click", () => {
+    edit.value = variant.script || "";
+    view.style.display = "block"; edit.style.display = "none";
+    bEdit.style.display = ""; bSave.style.display = "none"; bCancel.style.display = "none";
+  });
+
+  bSave.addEventListener("click", async () => {
+    const text = edit.value;
+    bSave.disabled = true;
+    bSave.textContent = "Сохраняю...";
+    try {
+      variant.script = text;
+      await saveVariants(requestId, allVariants);
+      view.innerHTML = formatScriptHtml(text);
+      tag.textContent = "· отредактировано";
+      view.style.display = "block"; edit.style.display = "none";
+      bEdit.style.display = ""; bSave.style.display = "none"; bCancel.style.display = "none";
+    } catch (e) {
+      alert("Не удалось сохранить: " + e.message);
+    } finally {
+      bSave.disabled = false;
+      bSave.textContent = "Сохранить правки";
+    }
+  });
+}
+
+async function saveVariants(requestId, variants) {
+  const res = await fetch(API_URL + "/history/" + requestId, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ variants })
+  });
+  if (!res.ok) {
+    const d = await readJson(res);
+    throw new Error(apiErrorMessage(d, "ошибка сохранения"));
+  }
+}
+
+/* ---------- история ---------- */
+let historyCache = [];
+
+async function loadHistory() {
+  const box = document.getElementById("lib-list");
+  const status = document.getElementById("lib-status");
+  box.innerHTML = '<div class="hint">Загружаю...</div>';
+  status.classList.remove("err");
+  status.textContent = "";
+
+  try {
+    const res = await fetch(API_URL + "/history?limit=20");
+    const data = await readJson(res);
+    if (!res.ok) throw new Error(apiErrorMessage(data, "Не удалось загрузить историю"));
+
+    historyCache = data.items || [];
+    status.textContent = "Записей: " + historyCache.length;
+    renderHistory();
+
+  } catch (e) {
+    box.innerHTML = "";
+    status.classList.add("err");
+    status.textContent = humanError(e);
+    console.error(e);
+  }
+}
+
+document.getElementById("lib-search").addEventListener("input", renderHistory);
+
+function renderHistory() {
+  const q = document.getElementById("lib-search").value.trim().toLowerCase();
+  const box = document.getElementById("lib-list");
+  const items = historyCache.filter((e) =>
+    !q || (e.client || "").toLowerCase().includes(q) || (e.niche || "").toLowerCase().includes(q)
+  );
+
+  if (!items.length) {
+    box.innerHTML = '<div class="hint">Ничего не найдено</div>';
+    return;
+  }
+
+  box.innerHTML = "";
+  items.forEach((entry) => {
+    const el = document.createElement("div");
+    el.className = "lib-entry";
+    el.innerHTML =
+      '<div class="head">' +
+        "<div>" +
+          '<div class="client">' + escapeHtml(entry.client || "без названия") + "</div>" +
+          '<div class="meta">' + escapeHtml(entry.niche || "") + " · " +
+            new Date(entry.createdAt).toLocaleString("ru-RU") + " · сценариев: " + (entry.count || 0) +
+          "</div>" +
+        "</div>" +
+        '<button class="btn ghost small" data-open>Показать сценарии</button>' +
+      "</div>" +
+      '<div class="scripts" style="display:none;margin-top:14px"></div>';
+    box.appendChild(el);
+
+    const holder = el.querySelector(".scripts");
+    el.querySelector("[data-open]").addEventListener("click", (ev) => {
+      const open = holder.style.display !== "none";
+      holder.style.display = open ? "none" : "block";
+      ev.target.textContent = open ? "Показать сценарии" : "Скрыть";
+      if (!open && !holder.dataset.filled) {
+        entry.variants = entry.variants || [];
+        entry.variants.forEach((v, i) => renderScript(holder, v, i, entry.requestId, entry.variants));
+        holder.dataset.filled = "1";
+      }
+    });
+  });
+}
+
+/* ---------- утилиты ---------- */
+
+/* Браузер на недоступный адрес отдаёт сухое "Failed to fetch" —
+   показываем пользователю что-то осмысленное. */
+function humanError(e) {
+  const m = String(e && e.message || "");
+  if (m === "Failed to fetch" || m.includes("NetworkError")) {
+    return "Не удалось связаться с сервисом. Проверьте подключение к интернету и адрес API.";
+  }
+  return m || "Сервис недоступен, попробуйте через минуту";
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+/* Строки вида "(говорящая голова, крупный план)" показываем приглушённым курсивом */
+function formatScriptHtml(text) {
+  return escapeHtml(text)
+    .split("\n")
+    .map((line) =>
+      /^\s*\(.*\)\s*$/.test(line)
+        ? '<span class="plan">' + line + "</span>"
+        : line
+    )
+    .join("\n");
+}
+</script>
+</body>
+</html>
