@@ -1,0 +1,7 @@
+# Скопировать в backend.hcl и вписать номер аккаунта.
+# Точное содержимое печатает: cd terraform/bootstrap && terraform output -raw backend_hcl
+bucket         = "fct-adgen-tfstate-123456789012"
+key            = "envs/dev/terraform.tfstate"
+region         = "us-east-1"
+dynamodb_table = "fct-adgen-tf-lock"
+encrypt        = true

@@ -1,0 +1,12 @@
+# Скопировать в terraform.tfvars и при необходимости поменять.
+# terraform.tfvars в .gitignore.
+
+region      = "us-east-1"
+alert_email = "kosseitadiya.05@gmail.com"
+
+gemini_model          = "gemini-3.8-flash"
+gemini_thinking_level = "low"
+
+# Запасные режимы, если что-то не взлетело перед демо:
+# lambda_in_vpc = false        # Lambda без VPC и без NAT-инстанса
+# frontend_mode = "s3_website" # если аккаунту пока не дают создать CloudFront
